@@ -370,23 +370,62 @@ summary {
 
 
 <pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ─────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.2.1     ✔ purrr   0.3.2
 ## ✔ tibble  2.1.3     ✔ dplyr   0.8.3
 ## ✔ tidyr   1.0.2     ✔ stringr 1.4.0
 ## ✔ readr   1.3.1     ✔ forcats 0.4.0</code></pre>
-<pre><code>## ── Conflicts ────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(readxl)</code></pre>
 <p>Problem 1:</p>
 <p>specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel use reasonable variable names omit rows that do not include dumpster-specific data round the number of sports balls to the nearest integer and converts the result to an integer variable (using as.integer) Read and clean precipitation data for 2017 and 2018. For each, omit rows without precipitation data and add a variable year. Next, combine precipitation datasets and convert month to a character variable (the variable month.name is built into R and should be useful).</p>
 <p>Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in both resulting datasets, and give examples of key variables. For available data, what was the total precipitation in 2018? What was the median number of sports balls in a dumpster in 2017?</p>
-<pre class="r"><code>trash_data = read_excel(&quot;./data_for_p1_and_p2/Trash_Wheel_Collection_Totals.xlsx&quot;)</code></pre>
+<pre class="r"><code>trash_data = 
+  read_excel(&quot;./data_for_p1_and_p2/Trash_Wheel_Collection_Totals.xlsx&quot;) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  drop_na(dumpster) %&gt;% 
+  mutate(sports_balls = as.integer(round(sports_balls))) </code></pre>
 <pre><code>## New names:
 ## * `` -&gt; ...15
 ## * `` -&gt; ...16
 ## * `` -&gt; ...17</code></pre>
+<pre class="r"><code>trash_data_2018 = 
+  read_excel(&quot;./data_for_p1_and_p2/Trash_Wheel_Collection_Totals.xlsx&quot;, sheet = &quot;2018 Precipitation&quot;, skip = 1) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  mutate(year = &quot;2018&quot;)
+
+trash_data_2017 = 
+  read_excel(&quot;./data_for_p1_and_p2/Trash_Wheel_Collection_Totals.xlsx&quot;, sheet = &quot;2017 Precipitation&quot;, skip = 1) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  mutate(year = &quot;2017&quot;)
+
+trash_data_2017_2018 =
+  bind_rows(trash_data_2018, trash_data_2017) %&gt;% 
+  mutate(month = month.name[month])</code></pre>
+<p>In the <code>trash_data</code> dataset, there are 344 observations, and 17 key variables. ** <code>the total precipittion in 2018</code> was 140.66<strong> </strong> <code>the median number of sports balls in a dumpster in 2017</code> was 8 **</p>
+<p>Problem 2</p>
+<p>This problem uses the FiveThirtyEight data; these data were gathered to create the interactive graphic on this page. In particular, we’ll use the data in pols-month.csv, unemployment.csv, and snp.csv. Our goal is to merge these into a single data frame using year and month as keys across datasets.</p>
+<p>First, clean the data in pols-month.csv. Use separate() to break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.</p>
+<p>Second, clean the data in snp.csv using a similar process to the above. For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.</p>
+<p>Third, tidy the unemployment data so that it can be merged with the previous datasets. This process will involve switching from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.</p>
+<p>Join the datasets by merging snp into pols, and merging unemployment into the result.</p>
+<p>Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).</p>
+<p>Note: we could have used a date variable as a key instead of creating year and month keys; doing so would help with some kinds of plotting, and be a more accurate representation of the data. Date formats are tricky, though. For more information check out the lubridate package in the tidyverse.</p>
+<pre class="r"><code>pols_month = read_csv(&quot;./data_for_p1_and_p2/pols_month.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   mon = col_date(format = &quot;&quot;),
+##   prez_gop = col_double(),
+##   gov_gop = col_double(),
+##   sen_gop = col_double(),
+##   rep_gop = col_double(),
+##   prez_dem = col_double(),
+##   gov_dem = col_double(),
+##   sen_dem = col_double(),
+##   rep_dem = col_double()
+## )</code></pre>
 
 
 
