@@ -475,6 +475,43 @@ trash_data_2017_2018 =
 ##  $ close    : num  NA NA NA NA NA NA NA NA NA NA ...</code></pre>
 <p>Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).</p>
 <p>In <code>pols_month</code> dataset, there are 4932 observations and 4 key variables. It show the distribution of party affiliations of governors and senators in different years and months. The range of years is 1947, 2015, and names of key variables are year, month, president, value.</p>
+<p>Problem 3</p>
+<p>This problem uses data from NYC Open data on the popularity of baby names, and can be downloaded here.</p>
+<p>Load and tidy the data. Note that, although these data may seem fairly well formatted initially, the names of a categorical predictor and the case structure of string variables changed over time; you’ll need to address this in your data cleaning. Also, some rows seem duplicated, and these will need to be removed (hint: google something like “dplyr remove duplicate rows” to get started).</p>
+<pre class="r"><code>baby_names =
+  read_csv(&quot;./data_for_p1_and_p2/Popular_Baby_Names.csv&quot;) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  mutate(
+    childs_first_name = str_to_sentence(childs_first_name),
+    ethnicity = str_to_sentence(ethnicity),
+    ethnicity = 
+      recode(ethnicity,
+        &quot;Asian and paci&quot; = &quot;Asian and pacific islander&quot;,
+        &quot;Black non hisp&quot; = &quot;Black non hispanic&quot;,
+        &quot;White non hisp&quot; = &quot;White non hispanic&quot;)
+  ) %&gt;% 
+  distinct %&gt;% 
+  arrange(year_of_birth, ethnicity, rank)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   `Year of Birth` = col_double(),
+##   Gender = col_character(),
+##   Ethnicity = col_character(),
+##   `Child's First Name` = col_character(),
+##   Count = col_double(),
+##   Rank = col_double()
+## )</code></pre>
+<p>Produce a well-structured, reader-friendly table showing the rank in popularity of the name “Olivia” as a female baby name over time; this should have rows for ethnicities and columns for year. Produce a similar table showing the most popular name among male children over time.</p>
+<pre class="r"><code>female_names_Olivia = filter(baby_names, gender == &quot;FEMALE&quot;, childs_first_name == &quot;Olivia&quot;) %&gt;% 
+  pivot_wider(names_from = year_of_birth, values_from = rank) %&gt;% 
+  select(-gender, -childs_first_name, -count)
+
+male_most_popular = filter(baby_names, gender == &quot;MALE&quot;, rank == 1) %&gt;% 
+  pivot_wider(names_from = year_of_birth, values_from = childs_first_name) %&gt;% 
+  select(-gender, -count, -rank)</code></pre>
+<p>Finally, for male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis).</p>
+<pre class="r"><code>male = filter(baby_names, gender == &quot;MALE&quot;, ethnicity != &quot;Hispanic&quot;, year_of_birth == 2016) %&gt;% 
+  ggplot(aes(x = rank, y = count)) + geom_point()</code></pre>
 
 
 

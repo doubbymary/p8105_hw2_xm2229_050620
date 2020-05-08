@@ -109,3 +109,53 @@ Write a short paragraph about these datasets. Explain briefly what each dataset 
 
 In `pols_month` dataset, there are `r nrow(pols_month)` observations and `r ncol(pols_month)` key variables. It show the distribution of party affiliations of governors and senators in different years and months. The range of years is `r range(pull(pols_month, year))`, and names of key variables are `r variable.names(pols_month)`.
 
+Problem 3
+
+This problem uses data from NYC Open data on the popularity of baby names, and can be downloaded here.
+
+Load and tidy the data. Note that, although these data may seem fairly well formatted initially, the names of a categorical predictor and the case structure of string variables changed over time; you’ll need to address this in your data cleaning. Also, some rows seem duplicated, and these will need to be removed (hint: google something like “dplyr remove duplicate rows” to get started).
+
+
+```{r}
+baby_names =
+  read_csv("./data_for_p1_and_p2/Popular_Baby_Names.csv") %>% 
+  janitor::clean_names() %>% 
+  mutate(
+    childs_first_name = str_to_sentence(childs_first_name),
+    ethnicity = str_to_sentence(ethnicity),
+    ethnicity = 
+      recode(ethnicity,
+        "Asian and paci" = "Asian and pacific islander",
+        "Black non hisp" = "Black non hispanic",
+        "White non hisp" = "White non hispanic")
+  ) %>% 
+  distinct %>% 
+  arrange(year_of_birth, ethnicity, rank)
+  
+```
+
+Produce a well-structured, reader-friendly table showing the rank in popularity of the name “Olivia” as a female baby name over time; this should have rows for ethnicities and columns for year. Produce a similar table showing the most popular name among male children over time.
+
+```{r}
+female_names_Olivia = filter(baby_names, gender == "FEMALE", childs_first_name == "Olivia") %>% 
+  pivot_wider(names_from = year_of_birth, values_from = rank) %>% 
+  select(-gender, -childs_first_name, -count)
+
+male_most_popular = filter(baby_names, gender == "MALE", rank == 1) %>% 
+  pivot_wider(names_from = year_of_birth, values_from = childs_first_name) %>% 
+  select(-gender, -count, -rank)
+```
+
+Finally, for male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis).
+
+```{r}
+male = filter(baby_names, gender == "MALE", ethnicity != "Hispanic", year_of_birth == 2016) %>% 
+  ggplot(aes(x = rank, y = count)) + geom_point()
+```
+
+
+
+
+
+
+
