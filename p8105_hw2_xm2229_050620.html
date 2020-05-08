@@ -404,16 +404,19 @@ trash_data_2017 =
 trash_data_2017_2018 =
   bind_rows(trash_data_2018, trash_data_2017) %&gt;% 
   mutate(month = month.name[month])</code></pre>
-<p>In the <code>trash_data</code> dataset, there are 344 observations, and 17 key variables. ** <code>the total precipittion in 2018</code> was 140.66<strong> </strong> <code>the median number of sports balls in a dumpster in 2017</code> was 8 **</p>
+<p>In the <code>trash_data</code> dataset, there are 344 observations, and 17 key variables.</p>
+<p>** <code>the total precipittion in 2018</code> was 140.66**</p>
+<p>** <code>the median number of sports balls in a dumpster in 2017</code> was 8 **</p>
 <p>Problem 2</p>
 <p>This problem uses the FiveThirtyEight data; these data were gathered to create the interactive graphic on this page. In particular, we’ll use the data in pols-month.csv, unemployment.csv, and snp.csv. Our goal is to merge these into a single data frame using year and month as keys across datasets.</p>
 <p>First, clean the data in pols-month.csv. Use separate() to break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.</p>
-<p>Second, clean the data in snp.csv using a similar process to the above. For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.</p>
-<p>Third, tidy the unemployment data so that it can be merged with the previous datasets. This process will involve switching from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.</p>
-<p>Join the datasets by merging snp into pols, and merging unemployment into the result.</p>
-<p>Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).</p>
-<p>Note: we could have used a date variable as a key instead of creating year and month keys; doing so would help with some kinds of plotting, and be a more accurate representation of the data. Date formats are tricky, though. For more information check out the lubridate package in the tidyverse.</p>
-<pre class="r"><code>pols_month = read_csv(&quot;./data_for_p1_and_p2/pols_month.csv&quot;)</code></pre>
+<pre class="r"><code>pols_month = read_csv(&quot;./data_for_p1_and_p2/pols_month.csv&quot;) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  separate(mon, into = c(&quot;year&quot;, &quot;month&quot;, &quot;day&quot;), convert = TRUE) %&gt;% 
+  mutate(month = month.abb[month]) %&gt;% 
+  pivot_longer(cols = prez_gop:rep_dem, names_to = &quot;president&quot;) %&gt;% 
+  filter(president != &quot;prez_dem&quot;, president !=&quot;prez_gop&quot;) %&gt;% 
+  select(-day) </code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   mon = col_date(format = &quot;&quot;),
@@ -426,6 +429,52 @@ trash_data_2017_2018 =
 ##   sen_dem = col_double(),
 ##   rep_dem = col_double()
 ## )</code></pre>
+<p>Second, clean the data in snp.csv using a similar process to the above. For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.</p>
+<pre class="r"><code>snp_data = read_csv(&quot;./data_for_p1_and_p2/snp.csv&quot;) %&gt;% 
+  janitor::clean_names() %&gt;% 
+  separate(date, into = c(&quot;month&quot;, &quot;day&quot;, &quot;year&quot;), convert = TRUE  ) %&gt;% 
+  mutate(month = month.abb[month]) %&gt;% 
+  select(year, month, day, everything()) %&gt;% 
+  select(-day)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   date = col_character(),
+##   close = col_double()
+## )</code></pre>
+<p>Third, tidy the unemployment data so that it can be merged with the previous datasets. This process will involve switching from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.</p>
+<pre class="r"><code>unemployment_data = read_csv(&quot;./data_for_p1_and_p2/unemployment.csv&quot;) %&gt;% 
+  pivot_longer(cols = Jan:Dec, names_to = &quot;month&quot;) %&gt;% 
+  select(year = Year, everything())</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   Year = col_double(),
+##   Jan = col_double(),
+##   Feb = col_double(),
+##   Mar = col_double(),
+##   Apr = col_double(),
+##   May = col_double(),
+##   Jun = col_double(),
+##   Jul = col_double(),
+##   Aug = col_double(),
+##   Sep = col_double(),
+##   Oct = col_double(),
+##   Nov = col_double(),
+##   Dec = col_double()
+## )</code></pre>
+<p>Join the datasets by merging snp into pols, and merging unemployment into the result.</p>
+<pre class="r"><code>merge_data = left_join(pols_month, snp_data) %&gt;% 
+  left_join(unemployment_data)</code></pre>
+<pre><code>## Joining, by = c(&quot;year&quot;, &quot;month&quot;)</code></pre>
+<pre><code>## Joining, by = c(&quot;year&quot;, &quot;month&quot;, &quot;value&quot;)</code></pre>
+<pre class="r"><code>str(merge_data)</code></pre>
+<pre><code>## Classes 'tbl_df', 'tbl' and 'data.frame':    4932 obs. of  5 variables:
+##  $ year     : num  1947 1947 1947 1947 1947 ...
+##  $ month    : chr  &quot;Jan&quot; &quot;Jan&quot; &quot;Jan&quot; &quot;Jan&quot; ...
+##  $ president: chr  &quot;gov_gop&quot; &quot;sen_gop&quot; &quot;rep_gop&quot; &quot;gov_dem&quot; ...
+##  $ value    : num  23 51 253 23 45 198 23 51 253 23 ...
+##  $ close    : num  NA NA NA NA NA NA NA NA NA NA ...</code></pre>
+<p>Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).</p>
+<p>In <code>pols_month</code> dataset, there are 4932 observations and 4 key variables. It show the distribution of party affiliations of governors and senators in different years and months. The range of years is 1947, 2015, and names of key variables are year, month, president, value.</p>
 
 
 
